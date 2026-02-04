@@ -1,61 +1,34 @@
-// // server.ts
-// import express from "express";
-// import cors from "cors";
-
-// import authRoutes from "./routes/auth.route";
-// import testRoutes from "./routes/route"; // DB test route
-
-// const app = express();
-
-// app.use(
-//   cors({
-//     origin: "http://localhost:3000",
-//   })
-// );
-
-// app.use(express.json());
-
-// /* ROUTES */
-// app.use("/api/auth", authRoutes);
-// app.use("/api", testRoutes);
-
-// /* ROOT */
-// app.get("/", (req, res) => {
-//   res.send("API running");
-// });
-
-// const PORT = 5000;
-
-// app.listen(PORT, () => {
-//   console.log(`Server running on port ${PORT}`);
-// });
 import express from "express";
 import cors from "cors";
-import { env } from "./config/env"; // Import your validated env
+import { env } from "./config/env";
 import authRoutes from "./routes/auth.route";
-import testRoutes from "./routes/route";
+import medicineRoutes from "./routes/medicine.route";
+import dbConnect from "./lib/mongodb";
 
 const app = express();
 
-app.use(
-  cors({
-    origin: "http://localhost:3000",
-  })
-);
-
+app.use(cors({ origin: "http://localhost:3000" }));
 app.use(express.json());
 
-/* ROUTES */
+// Register routes
 app.use("/api/auth", authRoutes);
-app.use("/api", testRoutes);
+app.use("/api/medicines", medicineRoutes);
 
-/* ROOT */
-app.get("/", (req, res) => {
-  res.send("API running");
-});
+const PORT = env.PORT || 5000;
 
-const PORT = env.PORT; // Use the variable from your config
+// ✅ Ensure server only listens AFTER DB is connected
+async function startServer() {
+  try {
+    await dbConnect();
+    console.log("✅ MongoDB Connected Successfully");
+    
+    app.listen(PORT, () => {
+      console.log(`✅ Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error("❌ Database connection failed:", err);
+    process.exit(1);
+  }
+}
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+startServer();

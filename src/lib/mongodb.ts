@@ -1,22 +1,41 @@
-import { MongoClient } from "mongodb";
+// mongodb.ts
+import mongoose from "mongoose";
 import { env } from "../config/env";
 
-let client: MongoClient;
-let clientPromise: Promise<MongoClient>;
+const MONGODB_URI = env.MONGODB_URI;
 
-declare global {
-  var _mongoClientPromise: Promise<MongoClient> | undefined;
+if (!MONGODB_URI) {
+  throw new Error("Please define the MONGODB_URI environment variable");
 }
 
-if (process.env.NODE_ENV === "development") {
-  if (!global._mongoClientPromise) {
-    client = new MongoClient(env.MONGODB_URI);
-    global._mongoClientPromise = client.connect();
+/**
+ * Global is used here to maintain a cached connection across hot reloads
+ * in development. This prevents connections from growing exponentially
+ * during API Route usage.
+ */
+let cached = (global as any).mongoose;
+
+if (!cached) {
+  cached = (global as any).mongoose = { conn: null, promise: null };
+}
+
+async function dbConnect() {
+  if (cached.conn) {
+    return cached.conn;
   }
-  clientPromise = global._mongoClientPromise!;
-} else {
-  client = new MongoClient(env.MONGODB_URI);
-  clientPromise = client.connect();
+
+  if (!cached.promise) {
+    const opts = {
+      bufferCommands: false,
+    };
+
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      console.log("✅ Mongoose Connected to Atlas");
+      return mongoose;
+    });
+  }
+  cached.conn = await cached.promise;
+  return cached.conn;
 }
 
-export default clientPromise;
+export default dbConnect;

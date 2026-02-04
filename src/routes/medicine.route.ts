@@ -1,32 +1,33 @@
 import express from "express";
-import clientPromise from "../lib/mongodb";
-import { IMedicine } from "../types/medicine";
+import mongoose from "mongoose";
+import { ObjectId } from "mongodb"; // ✅ Fixes the 'ObjectId' error from image_784603.png
 
 const router = express.Router();
 
-// GET all medicines for the shop
+// GET all medicines
 router.get("/all", async (req, res) => {
   try {
-    const client = await clientPromise;
-    const db = client.db("ymtipu101_db"); // Using the DB name from your .env
-    const medicines = await db.collection<IMedicine>("medicines").find({}).toArray();
+    const db = mongoose.connection.db;
+    if (!db) return res.status(500).json({ error: "Database not ready" });
+
+    const medicines = await db.collection("medicines").find({}).toArray();
     res.json(medicines);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch medicines" });
   }
 });
 
-// POST a new medicine (Used by Seller Dashboard)
+// POST new medicine
 router.post("/add", async (req, res) => {
   try {
-    const client = await clientPromise;
-    const db = client.db("ymtipu101_db");
-    const newMedicine: IMedicine = {
+    const db = mongoose.connection.db;
+    if (!db) return res.status(500).json({ error: "Database not connected" });
+
+    const result = await db.collection("medicines").insertOne({
       ...req.body,
       createdAt: new Date(),
-    };
-    const result = await db.collection("medicines").insertOne(newMedicine);
-    res.status(201).json({ success: true, id: result.insertedId });
+    });
+    res.status(201).json(result);
   } catch (error) {
     res.status(500).json({ error: "Failed to add medicine" });
   }
