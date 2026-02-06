@@ -1,9 +1,11 @@
+// server.ts
 import express from "express";
 import cors from "cors";
 import { env } from "./config/env";
 import authRoutes from "./routes/auth.route";
 import medicineRoutes from "./routes/medicine.route";
 import dbConnect from "./lib/mongodb";
+import feedbackRoute from "./routes/feedback.route";
 
 const app = express();
 
@@ -13,6 +15,14 @@ app.use(express.json());
 // Register routes
 app.use("/api/auth", authRoutes);
 app.use("/api/medicines", medicineRoutes);
+app.use("/api/feedback", feedbackRoute);
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
+
 
 const PORT = env.PORT || 5000;
 
