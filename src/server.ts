@@ -1,4 +1,3 @@
-// server.ts
 import express from "express";
 import cors from "cors";
 import { env } from "./config/env";
@@ -9,24 +8,23 @@ import feedbackRoute from "./routes/feedback.route";
 
 const app = express();
 
-app.use(cors({ origin: "http://localhost:3000" }));
+// ✅ Fixed CORS: Allowing all origins so Netlify can connect
+app.use(cors({ 
+  origin: "*", 
+  credentials: true 
+}));
+
 app.use(express.json());
 
 // Register routes
 app.use("/api/auth", authRoutes);
 app.use("/api/medicines", medicineRoutes);
 app.use("/api/feedback", feedbackRoute);
-app.use(
-  cors({
-    origin: "http://localhost:3000",
-    credentials: true,
-  })
-);
 
+// (Removed the duplicate app.use(cors) from down here to keep code clean)
 
 const PORT = env.PORT || 5000;
 
-// ✅ Ensure server only listens AFTER DB is connected
 async function startServer() {
   try {
     await dbConnect();

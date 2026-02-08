@@ -11,7 +11,7 @@ export const env = {
   JWT_SECRET: process.env.JWT_SECRET as string,
 };
 
-// Validation
+// Validation checks
 if (!env.MONGODB_URI) {
   throw new Error("❌ MONGODB_URI is missing in .env file");
 }
